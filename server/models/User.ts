@@ -10,6 +10,7 @@ export interface IUser extends Document {
   provider: 'email' | 'google';
   role: 'user' | 'admin';
   isVerified: boolean;
+  isBlocked: boolean;
   createdAt: Date;
   updatedAt: Date;
   comparePassword: (password: string) => Promise<boolean>;
@@ -53,6 +54,10 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
       default: 'user',
     },
     isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isBlocked: {
       type: Boolean,
       default: false,
     },
