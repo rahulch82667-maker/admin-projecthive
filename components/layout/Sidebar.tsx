@@ -18,6 +18,7 @@ const Sidebar = () => {
   const menuItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Users", href: "/users", icon: Users },
+    { name: "Projects", href: "/projects", icon: ShoppingBag },
     // { name: "Analytics", href: "/analytics", icon: BarChart3 },
     // { name: "Settings", href: "/settings", icon: Settings },
   ];

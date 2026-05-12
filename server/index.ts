@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
+import projectRoutes from "./routes/projectRoutes";
 
 
 const app = express();
@@ -29,6 +30,7 @@ app.use(cookieParser());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/projects", projectRoutes);
 
 // Database Connection
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/ProjectHive";

@@ -8,13 +8,13 @@ import PurchaseModal from "@/components/users/PurchaseModal";
 import { User, UserRole } from "@/lib/types";
 import { getUsers, updateUserRole, toggleUserBlock } from "@/lib/services/userService";
 import { Users as UsersIcon, RefreshCcw } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/store";
+import { fetchUsers, updateRole, toggleBlock, setCurrentPage } from "@/store/slices/userSlice";
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const dispatch = useDispatch<AppDispatch>();
+  const { users, loading, total, pages, currentPage } = useSelector((state: RootState) => state.users);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -25,43 +25,27 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const data = await getUsers(page, 10, search, role, isBlocked);
-      setUsers(data.users);
-      setPages(data.pages);
-      setTotal(data.total);
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = () => {
+    dispatch(fetchUsers({ page: currentPage, limit: 10, search, role, isBlocked }));
   };
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchUsers();
+      fetchData();
     }, 300); // Debounce search
     return () => clearTimeout(timer);
-  }, [page, search, role, isBlocked]);
+  }, [currentPage, search, role, isBlocked, dispatch]);
 
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
-    try {
-      const updatedUser = await updateUserRole(userId, newRole);
-      setUsers(users.map((u) => (u._id === userId ? updatedUser : u)));
-    } catch (error) {
-      console.error("Failed to update role:", error);
-    }
+    dispatch(updateRole({ userId, role: newRole }));
   };
 
   const handleToggleBlock = async (userId: string, blocked: boolean) => {
-    try {
-      const updatedUser = await toggleUserBlock(userId, blocked);
-      setUsers(users.map((u) => (u._id === userId ? updatedUser : u)));
-    } catch (error) {
-      console.error("Failed to toggle block status:", error);
-    }
+    dispatch(toggleBlock({ userId, blocked }));
+  };
+
+  const handlePageChange = (page: number) => {
+    dispatch(setCurrentPage(page));
   };
 
   const handleViewPurchases = (user: User) => {
@@ -95,7 +79,7 @@ export default function UsersPage() {
                <span className="text-xl font-black text-[#7c4a32]">{total}</span>
              </div>
              <button 
-               onClick={fetchUsers}
+               onClick={fetchData}
                className="p-2 hover:bg-stone-50 rounded-xl transition-colors text-stone-400 hover:text-[#7c4a32]"
                title="Refresh List"
              >
@@ -106,20 +90,20 @@ export default function UsersPage() {
 
         <UserFilters
           search={search}
-          setSearch={(v) => { setSearch(v); setPage(1); }}
+          setSearch={(v) => { setSearch(v); dispatch(setCurrentPage(1)); }}
           role={role}
-          setRole={(v) => { setRole(v); setPage(1); }}
+          setRole={(v) => { setRole(v); dispatch(setCurrentPage(1)); }}
           isBlocked={isBlocked}
-          setIsBlocked={(v) => { setIsBlocked(v); setPage(1); }}
+          setIsBlocked={(v) => { setIsBlocked(v); dispatch(setCurrentPage(1)); }}
           onClear={clearFilters}
         />
 
         <UserTable
           users={users}
           loading={loading}
-          page={page}
+          page={currentPage}
           pages={pages}
-          onPageChange={setPage}
+          onPageChange={handlePageChange}
           onRoleChange={handleRoleChange}
           onToggleBlock={handleToggleBlock}
           onViewPurchases={handleViewPurchases}
