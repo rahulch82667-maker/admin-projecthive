@@ -30,10 +30,12 @@ export const login = async (req: Request, res: Response) => {
 
     // 3. Create JWT Token
     const token = jwt.sign(
-      { firebaseUid: uid, email, role: user.role, id: user._id },
+      { firebaseUid: uid, email, role: user.role, id: user._id.toString() },
       process.env.JWT_SECRET || "fallback_secret",
       { expiresIn: "7d" }
     );
+    
+    console.log(`User logged in successfully: ${user.email} (ID: ${user._id})`);
 
     // 4. Store in Cookies
     res.cookie("auth_token", token, {

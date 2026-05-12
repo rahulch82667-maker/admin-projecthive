@@ -72,10 +72,6 @@ const Navbar = () => {
 
             {/* Simple Hover Dropdown */}
             <div className="absolute right-0 mt-2 w-56 bg-white border border-stone-100 rounded-2xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <div className="p-4 border-b border-stone-50">
-                <p className="text-sm font-bold text-stone-900">{user?.name}</p>
-                <p className="text-xs text-stone-500 truncate">{user?.email}</p>
-              </div>
               <div className="p-2">
                 <button 
                   onClick={handleLogout}
