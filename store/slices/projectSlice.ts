@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { getProjects, deleteProject } from '@/lib/services/projectService';
+import { getProjects, deleteProject, getProjectById, updateProject } from '@/lib/services/projectService';
 
-interface Project {
+export interface Project {
   _id: string;
   title: string;
   slug: string;
@@ -11,6 +11,7 @@ interface Project {
   thumbnail: string;
   salesCount: number;
   createdAt: string;
+  [key: string]: any; // Allow other properties like fullDescription, demoVideo etc.
 }
 
 interface ProjectState {
@@ -20,6 +21,7 @@ interface ProjectState {
   currentPage: number;
   loading: boolean;
   error: string | null;
+  currentProject: Project | null;
 }
 
 const initialState: ProjectState = {
@@ -29,6 +31,7 @@ const initialState: ProjectState = {
   currentPage: 1,
   loading: false,
   error: null,
+  currentProject: null,
 };
 
 export const fetchProjects = createAsyncThunk(
@@ -47,6 +50,22 @@ export const removeProject = createAsyncThunk(
   }
 );
 
+export const fetchProjectById = createAsyncThunk(
+  'projects/fetchById',
+  async (projectId: string) => {
+    const data = await getProjectById(projectId);
+    return data;
+  }
+);
+
+export const updateProjectAction = createAsyncThunk(
+  'projects/update',
+  async ({ id, projectData }: { id: string; projectData: any }) => {
+    const data = await updateProject(id, projectData);
+    return data;
+  }
+);
+
 const projectSlice = createSlice({
   name: 'projects',
   initialState,
@@ -54,9 +73,13 @@ const projectSlice = createSlice({
     setCurrentPage: (state, action: PayloadAction<number>) => {
       state.currentPage = action.payload;
     },
+    clearCurrentProject: (state) => {
+      state.currentProject = null;
+    }
   },
   extraReducers: (builder) => {
     builder
+      // Fetch all projects
       .addCase(fetchProjects.pending, (state) => {
         state.loading = true;
       })
@@ -70,12 +93,42 @@ const projectSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch projects';
       })
+      // Remove project
       .addCase(removeProject.fulfilled, (state, action) => {
         state.projects = state.projects.filter((p) => p._id !== action.payload);
         state.total -= 1;
+      })
+      // Fetch project by ID
+      .addCase(fetchProjectById.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchProjectById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentProject = action.payload;
+      })
+      .addCase(fetchProjectById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to fetch project';
+      })
+      // Update project
+      .addCase(updateProjectAction.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateProjectAction.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentProject = action.payload;
+        // Optionally update the project in the list if it exists
+        const index = state.projects.findIndex(p => p._id === action.payload._id);
+        if (index !== -1) {
+          state.projects[index] = action.payload;
+        }
+      })
+      .addCase(updateProjectAction.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to update project';
       });
   },
 });
 
-export const { setCurrentPage } = projectSlice.actions;
+export const { setCurrentPage, clearCurrentProject } = projectSlice.actions;
 export default projectSlice.reducer;
